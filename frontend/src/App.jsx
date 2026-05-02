@@ -1,15 +1,23 @@
 import { useState, useEffect, useRef } from 'react'
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import './App.css'
 
 function App() {
   const [mensajes, setMensajes] = useState([]);
   const [input, setInput] = useState('');
   const [cargando, setCargando] = useState(false);
-  
-  // Nuevo estado para simular que vemos los pasos del orquestador
-  const [pasoActual, setPasoActual] = useState(0);
-
   const mensajesEndRef = useRef(null);
+
+  const handleInput = (e) => {
+  const element = e.target;
+  setInput(element.value);
+  
+  // Lógica para que crezca
+  element.style.height = "24px"; // Reseteamos para recalcular
+if (element.scrollHeight > 24) {
+    element.style.height = `${Math.min(element.scrollHeight, 150)}px`;
+  }};
 
   const scrollToBottom = () => {
     mensajesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -26,90 +34,83 @@ function App() {
     setMensajes(nuevosMensajes);
     setInput('');
     setCargando(true);
-    setPasoActual(1); // Iniciamos el pipeline
 
     try {
-      // Simulación de pasos para el monitor (esto da el toque Pro al TFG)
-      setTimeout(() => setPasoActual(2), 500); // RAG
-      setTimeout(() => setPasoActual(3), 1200); // Prompt Engineering
+      const res = await fetch(`http://localhost:8080/api/chat?mensaje=${encodeURIComponent(input)}`);
+      const data = await res.json();
 
-      const respuesta = await fetch(`http://localhost:8080/api/chat?mensaje=${encodeURIComponent(input)}`);
-      const textoIA = await respuesta.text();
-      
-      setMensajes([...nuevosMensajes, { rol: 'ia', texto: textoIA }]);
-      setPasoActual(4); // Finalizado
+      setMensajes([...nuevosMensajes, { 
+        rol: 'ia', 
+        texto: data.respuestaFinal,
+        tokens: data.tokens,
+        coste: data.coste
+      }]);
     } catch (error) {
-      setMensajes([...nuevosMensajes, { rol: 'ia', texto: "Error: Backend desconectado" }]);
-      setPasoActual(0);
+      setMensajes([...nuevosMensajes, { rol: 'ia', texto: "Error: No se pudo conectar con el servidor." }]);
     } finally {
       setCargando(false);
     }
   };
 
   return (
-    <div className="dashboard-container">
-      {/* PANEL LATERAL IZQUIERDO: MONITOR DE PIPELINE */}
-      <aside className="pipeline-panel">
-        <h3>Pipeline Orquestador</h3>
-        <div className="steps-container">
-          <div className={`step ${pasoActual >= 1 ? 'active' : ''}`}>
-             <span className="step-num">1</span> Entrada Natural
-          </div>
-          <div className={`step ${pasoActual >= 2 ? 'active' : ''}`}>
-             <span className="step-num">2</span> Recuperación RAG
-          </div>
-          <div className={`step ${pasoActual >= 3 ? 'active' : ''}`}>
-             <span className="step-num">3</span> Prompt Optimization
-          </div>
-          <div className={`step ${pasoActual >= 4 ? 'active' : ''}`}>
-             <span className="step-num">4</span> Inferencia LLM
-          </div>
+    <div className="main-layout">
+      <header className="nav-bar">
+        <div className="brand">
+          <div className="logo-icon">M</div>
+          <h1>Tartas Marco <span>Sistema de Gestión</span></h1>
         </div>
-        
-        <div className="rag-info">
-          <h4>Metadata RAG:</h4>
-          <p>{cargando ? "Analizando documentos..." : "Consultando datos.txt"}</p>
+        <div className="status-badge">
+          <span className="dot"></span> Online
         </div>
-      </aside>
+      </header>
 
-      {/* PANEL CENTRAL: EL CHAT */}
-      <main className="chat-main">
-        <header className="chat-header">
-          <div className="status-container">
-            <div className="status-dot"></div>
-            <span>Intermediario Semántico Activo</span>
-          </div>
-          <h1>Optimizador</h1>
-        </header>
-
-        <div className="chat-window"> {/* ESTE es el que tiene el scroll */}
+      <div className="chat-container">
+        <div className="messages-view">
+          {mensajes.length === 0 && (
+            <div className="welcome-screen">
+              <h2>Panel de Control Inteligente</h2>
+              <p>Consulta stock, recetas o realiza pedidos de forma automatizada.</p>
+            </div>
+          )}
+          
           {mensajes.map((m, i) => (
-            <div key={i} className={`message-wrapper ${m.rol === 'usuario' ? 'user' : 'bot'}`}>
-              <div className="message-bubble">
-                {m.texto}
+            <div key={i} className={`msg-row ${m.rol}`}>
+              <div className="msg-bubble">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {m.texto}
+                </ReactMarkdown>
+                {m.rol === 'ia' && m.tokens > 0 && (
+                  <div className="token-meta">
+                    ⚡ {m.tokens} tokens | {m.coste.toFixed(5)}€
+                  </div>
+                )}
               </div>
             </div>
           ))}
-          
-          {cargando && <div className="loading-spinner">Ejecutando Pipeline...</div>}
-          
-          {/* EL ANCLA AQUÍ ABAJO, DENTRO DE chat-window */}
-          <div ref={mensajesEndRef} /> 
+          <div ref={mensajesEndRef} />
         </div>
 
-        <div className="input-area">
-          <input 
-            type="text" 
-            placeholder="Introduce petición ambigua..."
+        <div className="input-box">
+          <div className="input-wrapper">
+          <textarea 
+            placeholder="Escribe tu petición aquí..."
             value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && enviarMensaje()}
+            onChange={handleInput} // Usamos nuestra nueva función
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) { // Enter envía, Shift+Enter salta línea
+                e.preventDefault();
+                enviarMensaje();
+                e.target.style.height = "auto"; // Resetea altura al enviar
+              }
+            }}
+            rows="1"
           />
           <button onClick={enviarMensaje} disabled={cargando}>
-            {cargando ? 'Procesando...' : 'Orquestar'}
+            {cargando ? <div className="spinner"></div> : "Enviar"}
           </button>
         </div>
-      </main>
+        </div>
+      </div>
     </div>
   )
 }

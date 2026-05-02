@@ -2,56 +2,113 @@ package com.example.demo;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
-import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor; // ¡IMPORTANTE!
-import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.InMemoryChatMemory;
-import org.springframework.ai.vectorstore.VectorStore; // ¡IMPORTANTE!
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Description;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY;
-import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_RETRIEVE_SIZE_KEY;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
 
 @RestController
 @CrossOrigin(origins = "*")
 public class ChatController {
 
     private final ChatClient chatClient;
-    private final VectorStore vectorStore; // Añadimos esto
+    private final VectorStore vectorStore;
+
+    // Record optimizado para el Frontend
+    public record OrchestratorResponse(
+        String respuestaFinal,
+        String razonamiento,
+        long tokens,
+        double coste
+    ) {}
 
     public ChatController(ChatClient.Builder chatClientBuilder, VectorStore vectorStore) {
-        this.vectorStore = vectorStore; // Lo guardamos
-        
-        ChatMemory memory = new InMemoryChatMemory();
-
+        this.vectorStore = vectorStore;
         this.chatClient = chatClientBuilder
-                .defaultAdvisors(new MessageChatMemoryAdvisor(memory))
+                .defaultAdvisors(new MessageChatMemoryAdvisor(new InMemoryChatMemory()))
                 .build();
     }
 
     @GetMapping("/api/chat")
-    public String chat(@RequestParam(defaultValue = "Hola") String mensaje) {
-        
-        String systemPrompt = "Eres un experto en Ingeniería de Prompts. Responde basándote en la información proporcionada.";
+    public OrchestratorResponse chat(@RequestParam(defaultValue = "Hola") String mensaje) {
+        // 1. Valla de Seguridad & Ahorro de Tokens (Bypass manual)
+        String input = mensaje.toLowerCase();
+        if (input.matches(".*(hola|buenos dias|que tal|saludos).*") && mensaje.length() < 15) {
+            return new OrchestratorResponse("¡Hola! Soy tu asistente de Tartas Marco. ¿En qué puedo ayudarte?", "Cortesía", 0, 0.0);
+        }
+
+        // 2. System Prompt: Vallas de seguridad e instrucciones de comportamiento
+        String systemPrompt = """
+            Eres el Agente Operativo de Tartas Marco. 
+            FORMATO DE SALIDA:
+            1. Usa títulos con '#' para secciones importantes.
+            2. Usa tablas para comparar datos (como tiempos de horneado o stock).
+            3. Usa listas con viñetas para pasos o ingredientes.
+            4. Usa bloques de 'quote' (>) para advertencias o notas importantes.
+            5. EVITA las negritas (**) en frases largas; úsalas solo para términos clave.
+            """;
 
         try {
-            return this.chatClient.prompt()
-                .system(systemPrompt)
-                .user(mensaje)
-                .advisors(
-                    new MessageChatMemoryAdvisor(new InMemoryChatMemory()), // Memoria
-                    new QuestionAnswerAdvisor(vectorStore)                 // RAG
-                )
-                .advisors(a -> a
-                    .param(CHAT_MEMORY_CONVERSATION_ID_KEY, "usuario-123")
-                    .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10)
-                )
-                .call()
-                .content();
+            var response = this.chatClient.prompt()
+                    .system(systemPrompt)
+                    .user(mensaje)
+                    .functions("consultarStock", "realizarCompra") // Llamada a las herramientas
+                    .advisors(new QuestionAnswerAdvisor(vectorStore))
+                    .call()
+                    .chatResponse();
+
+            // 3. Métricas de Uso
+            long totalTokens = response.getMetadata().getUsage().getTotalTokens();
+            double costeEstimado = (totalTokens / 1000.0) * 0.00015; // Estimación coste modelo mini
+
+            return new OrchestratorResponse(
+                response.getResult().getOutput().getContent(),
+                "Procesado con RAG y Function Calling",
+                totalTokens,
+                costeEstimado
+            );
+
         } catch (Exception e) {
-            return "Error técnico: " + e.getMessage();
+            return new OrchestratorResponse("Error: " + e.getMessage(), "Fallo en inferencia", 0, 0.0);
         }
     }
 }
+
+/** * CONFIGURACIÓN DE HERRAMIENTAS (Tools)
+ * Estas funciones permiten que la IA interactúe con el sistema.
+ */
+@Configuration
+class AiTools {
+    private Map<String, Integer> stock = new HashMap<>(Map.of("Harina", 5, "Queso Crema", 10, "Chocolate", 2));
+
+    @Bean
+    @Description("Obtiene el stock actual de un ingrediente")
+    public Function<StockRequest, String> consultarStock() {
+        return request -> {
+            Integer cantidad = stock.getOrDefault(request.ingrediente(), 0);
+            return "Stock de " + request.ingrediente() + ": " + cantidad + " unidades.";
+        };
+    }
+
+    @Bean
+    @Description("Realiza una compra de ingredientes si el stock es bajo")
+    public Function<OrderRequest, String> realizarCompra() {
+        return request -> {
+            if (request.cantidad() > 50) return "Error: Capacidad de almacén excedida.";
+            return "ORDEN PROCESADA: " + request.cantidad() + " unidades de " + request.ingrediente();
+        };
+    }
+}
+
+record StockRequest(String ingrediente) {}
+record OrderRequest(String ingrediente, int cantidad) {}

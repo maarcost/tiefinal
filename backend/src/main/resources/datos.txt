@@ -1,21 +1,29 @@
---- FICHA TÉCNICA Y LOGÍSTICA DE "TARTAS ARTESANAS MARCO" ---
+--- FICHA TÉCNICA, LOGÍSTICA Y OPERATIVA DE "TARTAS ARTESANAS MARCO" ---
 
-1. PROVEEDORES OFICIALES:
+1. PROVEEDORES Y GESTIÓN DE SUMINISTROS:
 - Proveedor de Lácteos: "Granja El Pinar". Contacto: Manuel Serrano (Tel: +34 600 112 233). Suministra nata líquida 35% MG y mantequilla sin sal en bloques de 5kg.
 - Proveedor de Fruta: "Frutas Doñana". Dirección: Polígono Industrial Nave 14, Huelva. Entregan fresas de temporada y arándanos silvestres cada martes a las 08:00 AM.
 - Proveedor de Harinas: "Molinos del Sur". Suministra harina de fuerza ecológica (Referencia: REF-H450) en sacos de 25kg.
+- Inventario Crítico: Si el stock de Harina REF-H450 baja de 3 sacos, el sistema debe proponer una orden de compra inmediata.
 
-2. RECETARIO EXCLUSIVO (SECRETOS DE EMPRESA):
-- Tarta de Queso "Marco Special": Utiliza una mezcla de 60% queso crema y 40% queso de cabra curado de "Queserías Altamira". Tiempo de horneado exacto: 42 minutos a 165°C.
-- Cobertura de Chocolate: Se utiliza exclusivamente Chocolate Valrhona 70% cacao. El punto de fusión óptimo para el templado es de 31°C.
+2. RECETARIO EXCLUSIVO Y PROTOCOLOS TÉCNICOS:
+- Tarta de Queso "Marco Special": Mezcla de 60% queso crema y 40% queso de cabra curado de "Queserías Altamira". Horneado: 42 min a 165°C.
+- Plan de Contingencia (Queso): Si no hay Queso de Cabra, sustituir por Queso de Oveja Semicurado (REF: ALT-02). Acción técnica: Reducir horneado a 38 min para mantener cremosidad.
+- Cobertura de Chocolate: Chocolate Valrhona 70% cacao. Punto de fusión: 31°C.
+- Límites de Producción: El horno principal tiene capacidad para 12 tartas por tanda. Capacidad máxima diaria: 48 tartas.
 
-3. LOGÍSTICA Y ENTREGAS:
+3. LOGÍSTICA, ENTREGAS Y CLIENTES:
 - Código de seguridad del almacén: 8842#
 - Horario de reparto: Lunes a Sábado de 07:00 a 11:00.
 - Zona de cobertura: Madrid Centro y municipios dentro de la M-40.
-- Pedidos urgentes: Deben realizarse antes de las 19:00 del día anterior a través de la extensión interna 104.
+- Clientes VIP (Prioridad Oro): Restaurante "La Lonja" y "Hotel Ritz". Entrega garantizada antes de las 08:00 AM.
+- Pedidos urgentes: Deben realizarse antes de las 19:00 del día anterior vía extensión 104.
 
-4. DATOS FISCALES Y UBICACIÓN:
-- CIF: B-12345678J
-- Sede Central: Calle de la Dulzura, 45, 28001 Madrid.
-- Gerente de Operaciones: Marco (Director de Sistemas y Producción).
+4. MANTENIMIENTO Y SEGURIDAD:
+- Servicio Técnico Hornos: "TecnoCalor" (Contacto: Roberto, 611 223 344). Revisiones obligatorias los días 15 de cada mes.
+- Protocolo de Fallo Eléctrico: El generador solo soporta cámaras frigoríficas. En caso de corte, detener producción de hornos y priorizar conservación de lácteos.
+
+5. DICCIONARIO OPERATIVO (JERGA INTERNA):
+- "Lo de siempre": Se refiere al pedido estándar de 10 sacos de harina y 20 bloques de mantequilla.
+- "La tarta de Marco": Nombre coloquial para la "Marco Special".
+- "Pedido Flash": Cualquier entrega que deba salir en menos de 2 horas (solo disponible para Clientes VIP).
