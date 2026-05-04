@@ -23,6 +23,7 @@ public class ChatController {
 
     private final ChatClient chatClient;
     private final VectorStore vectorStore;
+    private final Map<String, String> cache = new HashMap<>();
 
     public record OrchestratorResponse(
         String respuestaFinal,
@@ -46,6 +47,22 @@ public class ChatController {
         if (m.matches(".*(proveedor|contacto|teléfono|telefono|entrega|suministro|llamo|llamar).*")) return "PROVEEDOR";
         if (m.matches(".*(comprar|pedir|ordenar|quiero.*unidades|realizar.*compra|pedido flash|flash).*")) return "PEDIDO";
         return "GENERAL";
+    }
+
+    private String normalizarTexto(String texto) {
+    return texto.toLowerCase()
+        .replaceAll("[áà]", "a").replaceAll("[éè]", "e")
+        .replaceAll("[íì]", "i").replaceAll("[óò]", "o")
+        .replaceAll("[úù]", "u").replaceAll("ñ", "n")
+        .replaceAll("[^a-z0-9 ]", "").trim();
+    }
+
+    private String buscarEnCache(String mensaje) {
+        String normalizado = normalizarTexto(mensaje);
+        for (Map.Entry<String, String> entry : cache.entrySet()) {
+            if (entry.getKey().equals(normalizado)) return entry.getValue();
+        }
+        return null;
     }
 
     // ─── PROMPT DINÁMICO ───
@@ -100,28 +117,39 @@ public class ChatController {
             );
         }
 
-        // 2. Clasificar intención y construir prompt dinámico
+        // 2. Buscar en caché
+        String cached = buscarEnCache(mensaje);
+        if (cached != null) {
+            return new OrchestratorResponse(cached, "CACHÉ - 0 tokens consumidos", 0, 0.0);
+        }
+
+        // 3. Clasificar intención y construir prompt dinámico
         String intencion = clasificarIntencion(mensaje);
         String systemPrompt = construirPrompt(intencion);
 
         try {
-            var response = this.chatClient.prompt()
+            var prompt = this.chatClient.prompt()
                     .system(systemPrompt)
                     .user(mensaje)
-                    .functions("consultarStock", "realizarCompra")
-                    .advisors(new QuestionAnswerAdvisor(vectorStore))
-                    .call()
-                    .chatResponse();
+                    .functions("consultarStock", "realizarCompra");
+
+            if (intencion.equals("GENERAL") || intencion.equals("RECETA") || intencion.equals("PROVEEDOR")) {
+                prompt = prompt.advisors(new QuestionAnswerAdvisor(vectorStore));
+            }
+
+            var response = prompt.call().chatResponse();
 
             long totalTokens = response.getMetadata().getUsage().getTotalTokens();
             double costeEstimado = (totalTokens / 1000.0) * 0.00015;
 
-            return new OrchestratorResponse(
-                response.getResult().getOutput().getContent(),
-                "Intención: " + intencion,
-                totalTokens,
-                costeEstimado
-            );
+            String respuesta = response.getResult().getOutput().getContent();
+
+            // Solo cachear preguntas que no dependen de stock en tiempo real
+            if (!intencion.equals("STOCK") && !intencion.equals("PEDIDO")) {
+                cache.put(normalizarTexto(mensaje), respuesta);
+            }
+
+            return new OrchestratorResponse(respuesta, "Intención: " + intencion, totalTokens, costeEstimado);
 
         } catch (Exception e) {
             return new OrchestratorResponse("Error: " + e.getMessage(), "Fallo en inferencia", 0, 0.0);
