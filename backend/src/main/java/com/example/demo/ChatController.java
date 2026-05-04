@@ -102,8 +102,9 @@ public class ChatController {
                 """;
             case "PEDIDO" -> base + """
                 El usuario quiere realizar un pedido o compra.
-                OBLIGATORIO: Antes de ejecutar realizarCompra, resume el pedido y pregunta explícitamente "¿Confirmas este pedido?" y espera respuesta del usuario.
-                NUNCA ejecutes realizarCompra en el mismo mensaje en que el usuario hace la petición.
+                FLUJO OBLIGATORIO:
+                - Si el usuario NO ha confirmado aún: resume el pedido y pregunta "¿Confirmas este pedido?"
+                - Si el usuario dice "sí", "si", "confirmo", "acepto", "adelante" o similar: ejecuta INMEDIATAMENTE realizarCompra con los ingredientes y cantidades del pedido. No vuelvas a preguntar.
                 Recuerda las condiciones de Pedido Flash si aplica: solo clientes VIP, menos de 2 horas.
                 """;
             default -> base + """
