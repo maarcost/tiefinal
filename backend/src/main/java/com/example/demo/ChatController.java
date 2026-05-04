@@ -80,7 +80,8 @@ public class ChatController {
         }
         return null;
     }
-
+    
+    /* 
     // ─── PROMPT DINÁMICO ───
     private String construirPrompt(String intencion) {
         String base = "Eres el Agente Operativo de Tartas Marco. REGLA ABSOLUTA: NUNCA ejecutes realizarCompra sin que el usuario lo pida explícitamente con palabras como comprar, pedir u ordenar.\n\n";
@@ -120,7 +121,28 @@ public class ChatController {
                 """;
         };
     }
+*/  
+    private String construirPrompt(String intencion) {
+    String base = "Eres el Agente Operativo de Tartas Marco. REGLA ABSOLUTA: NUNCA ejecutes realizarCompra sin confirmación explícita del usuario.\n\n";
 
+    return switch (intencion) {
+        case "STOCK" -> base + 
+            "Usa consultarStock para obtener el dato real del ingrediente. Cuando tengas el resultado, responde en lenguaje natural en máximo 2 líneas indicando la cantidad disponible. No muestres código ni llamadas a funciones.";
+        
+        case "RECETA" -> base + 
+            "Responde con los ingredientes en lista y tiempos/temperaturas en tabla. Incluye planes de contingencia si los hay.";
+        
+        case "PROVEEDOR" -> base + 
+            "Responde únicamente con: nombre del proveedor, persona de contacto y teléfono. Sin información adicional.";
+        
+        case "PEDIDO" -> base + 
+            "FLUJO OBLIGATORIO: Si no hay confirmación aún, resume el pedido y pregunta '¿Confirmas este pedido?'. Si el usuario confirma con sí/confirmo/acepto, ejecuta realizarCompra inmediatamente.";
+        
+        default -> base + 
+            "Usa títulos, listas y tablas para estructurar la respuesta. Sé conciso y directo.";
+        };
+    }
+    
     @GetMapping("/api/chat")
     public OrchestratorResponse chat(@RequestParam(defaultValue = "Hola") String mensaje) {
 
