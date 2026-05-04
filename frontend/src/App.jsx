@@ -52,6 +52,26 @@ if (element.scrollHeight > 24) {
     }
   };
 
+  const enviarAyuda = async () => {
+  const nuevosMensajes = [...mensajes, { rol: 'usuario', texto: 'ayuda' }];
+  setMensajes(nuevosMensajes);
+  setCargando(true);
+  try {
+    const res = await fetch(`http://localhost:8081/api/chat?mensaje=ayuda`);
+    const data = await res.json();
+    setMensajes([...nuevosMensajes, { 
+      rol: 'ia', 
+      texto: data.respuestaFinal,
+      tokens: data.tokens,
+      coste: data.coste
+    }]);
+  } catch (error) {
+    setMensajes([...nuevosMensajes, { rol: 'ia', texto: "Error: No se pudo conectar con el servidor." }]);
+  } finally {
+    setCargando(false);
+  }
+};
+
   return (
     <div className="main-layout">
       <header className="nav-bar">
@@ -105,6 +125,14 @@ if (element.scrollHeight > 24) {
             }}
             rows="1"
           />
+          <button 
+            onClick={enviarAyuda} 
+            disabled={cargando}
+            className="help-btn"
+            title="¿Qué puedo preguntarte?"
+          >
+            ?
+          </button>
           <button onClick={enviarMensaje} disabled={cargando}>
             {cargando ? <div className="spinner"></div> : "Enviar"}
           </button>

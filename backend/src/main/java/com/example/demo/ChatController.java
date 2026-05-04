@@ -50,15 +50,18 @@ public class ChatController {
     }
 
     private boolean estaEnContexto(String mensaje) {
-    String m = mensaje.toLowerCase();
-    return m.matches(".*(tarta|harina|queso|chocolate|mantequilla|" +
-    "proveedor|stock|pedido|comprar|entregar|cliente|" +
-    "receta|hornear|ingrediente|marco|almacen|" +
-    "nata|fruta|granja|molino|reparto|factura|" +
-    "lo de siempre|pedido flash|flash|vip|ritz|lonja|" +
-    "valrhona|altamira|doñana|pinar|horno|contingencia|" +
-    "electricidad|generador|mantenimiento|tecno|" +
-    "si|sí|confirmo|confirmar|acepto|adelante|procede|ok|vale).*");
+    String m = mensaje.toLowerCase().trim();
+    
+    // Mensajes cortos siempre pasan — son respuestas conversacionales
+    if (m.split(" ").length <= 4) return true;
+    
+    // Bloquear solo temas claramente ajenos al negocio
+    boolean temaAjeno = m.matches(".*(capital|presidente|futbol|fútbol|pelicula|película|" +
+        "cancion|canción|musica|música|politica|política|deporte|" +
+        "tiempo.*mañana|historia.*mundo|guerra|pais|país|continente|" +
+        "matematica|matemática|fisica|física|quimica|química).*");
+    
+    return !temaAjeno;
     }
 
     private String normalizarTexto(String texto) {
@@ -125,6 +128,43 @@ public class ChatController {
             return new OrchestratorResponse(
                 "¡Hola! Soy tu asistente de Tartas Marco. ¿En qué puedo ayudarte?",
                 "SALUDO - Bypass activado",
+                0, 0.0
+            );
+        }
+
+        // Bypass de ayuda
+        if (input.trim().equals("ayuda") || input.trim().equals("help") || input.trim().equals("?")) {
+            return new OrchestratorResponse(
+                """
+                👋 **Bienvenido al asistente de Tartas Artesanas Marco**
+                
+                Aquí tienes todo lo que puedo hacer por ti:
+                
+                📦 **Stock e inventario**
+                - ¿Cuánta harina tenemos?
+                - ¿Cuánto chocolate queda en stock?
+                
+                🛒 **Pedidos y compras**
+                - Quiero comprar 10 sacos de harina
+                - Quiero hacer lo de siempre
+                
+                🎂 **Recetas y elaboración**
+                - ¿Cómo se prepara la tarta de Marco?
+                - ¿Qué hago si no hay queso de cabra?
+                
+                🚚 **Proveedores y logística**
+                - ¿Quién es nuestro proveedor de lácteos?
+                - ¿Cuál es el horario de reparto?
+                - ¿Quiénes son nuestros clientes VIP?
+                
+                ⚡ **Pedidos urgentes**
+                - Necesito un pedido flash
+                
+                🔧 **Protocolos y contingencias**
+                - ¿Qué hacemos si falla la electricidad?
+                - ¿Cuándo es la próxima revisión del horno?
+                """,
+                "AYUDA - Bypass activado",
                 0, 0.0
             );
         }
