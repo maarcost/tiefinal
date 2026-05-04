@@ -52,12 +52,13 @@ public class ChatController {
     private boolean estaEnContexto(String mensaje) {
     String m = mensaje.toLowerCase();
     return m.matches(".*(tarta|harina|queso|chocolate|mantequilla|" +
-        "proveedor|stock|pedido|comprar|entregar|cliente|" +
-        "receta|hornear|ingrediente|marco|almacen|" +
-        "nata|fruta|granja|molino|reparto|factura|" +
-        "lo de siempre|pedido flash|flash|vip|ritz|lonja|" +
-        "valrhona|altamira|doñana|pinar|horno|contingencia|" +
-        "electricidad|generador|mantenimiento|tecno).*");
+    "proveedor|stock|pedido|comprar|entregar|cliente|" +
+    "receta|hornear|ingrediente|marco|almacen|" +
+    "nata|fruta|granja|molino|reparto|factura|" +
+    "lo de siempre|pedido flash|flash|vip|ritz|lonja|" +
+    "valrhona|altamira|doñana|pinar|horno|contingencia|" +
+    "electricidad|generador|mantenimiento|tecno|" +
+    "si|sí|confirmo|confirmar|acepto|adelante|procede|ok|vale).*");
     }
 
     private String normalizarTexto(String texto) {
@@ -179,14 +180,16 @@ public class ChatController {
 
 @Configuration
 class AiTools {
-    private Map<String, Integer> stock = new HashMap<>(Map.of("Harina", 5, "Queso Crema", 10, "Chocolate", 2));
+
+    private Map<String, Integer> stock = new HashMap<>(Map.of("Harina", 5, "Queso Crema", 10, "Chocolate", 2, "Mantequilla", 15));
 
     @Bean
     @Description("SIEMPRE usa esta función cuando el usuario pregunte por el stock, cantidad disponible o inventario de cualquier ingrediente. Devuelve el stock real en tiempo real.")
     public Function<StockRequest, String> consultarStock() {
         return request -> {
-            String key = request.ingrediente().substring(0, 1).toUpperCase() 
-                       + request.ingrediente().substring(1).toLowerCase();
+            String ingrediente = request.ingrediente().split(" ")[0];
+            String key = ingrediente.substring(0, 1).toUpperCase() 
+                    + ingrediente.substring(1).toLowerCase();
             Integer cantidad = stock.getOrDefault(key, 0);
             return "Stock de " + key + ": " + cantidad + " unidades.";
         };
