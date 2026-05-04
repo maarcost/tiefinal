@@ -195,7 +195,7 @@ public class ChatController {
                     .user(mensaje)
                     .functions("consultarStock", "realizarCompra");
 
-            if (intencion.equals("GENERAL") || intencion.equals("RECETA") || intencion.equals("PROVEEDOR")) {
+            if (intencion.equals("GENERAL") || intencion.equals("RECETA") || intencion.equals("PROVEEDOR") || intencion.equals("PEDIDO")) {
                 prompt = prompt.advisors(new QuestionAnswerAdvisor(vectorStore));
             }
 
