@@ -36,7 +36,7 @@ if (element.scrollHeight > 24) {
     setCargando(true);
 
     try {
-      const res = await fetch(`http://localhost:8080/api/chat?mensaje=${encodeURIComponent(input)}`);
+      const res = await fetch(`http://localhost:8081/api/chat?mensaje=${encodeURIComponent(input)}`);
       const data = await res.json();
 
       setMensajes([...nuevosMensajes, { 

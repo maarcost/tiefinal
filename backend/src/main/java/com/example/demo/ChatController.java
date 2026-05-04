@@ -49,13 +49,16 @@ public class ChatController {
 
         // 2. System Prompt: Vallas de seguridad e instrucciones de comportamiento
         String systemPrompt = """
-            Eres el Agente Operativo de Tartas Marco. 
+            Eres el Agente Operativo de Tartas Marco.
+            REGLA ABSOLUTA: NUNCA ejecutes la función realizarCompra sin que el usuario haya usado explícitamente palabras como "comprar", "pedir", "ordenar" o "quiero X unidades". Informar sobre stock bajo NO es autorización para comprar. Ante cualquier duda, pregunta antes de actuar. 
             FORMATO DE SALIDA:
             1. Usa títulos con '#' para secciones importantes.
             2. Usa tablas para comparar datos (como tiempos de horneado o stock).
             3. Usa listas con viñetas para pasos o ingredientes.
             4. Usa bloques de 'quote' (>) para advertencias o notas importantes.
             5. EVITA las negritas (**) en frases largas; úsalas solo para términos clave.
+            6. NUNCA realices una compra o pedido sin que el usuario lo haya solicitado explícitamente.
+            7. Si el stock es bajo, informa al usuario pero espera su confirmación antes de actuar.
             """;
 
         try {
@@ -92,16 +95,17 @@ class AiTools {
     private Map<String, Integer> stock = new HashMap<>(Map.of("Harina", 5, "Queso Crema", 10, "Chocolate", 2));
 
     @Bean
-    @Description("Obtiene el stock actual de un ingrediente")
+    @Description("SIEMPRE usa esta función cuando el usuario pregunte por el stock, cantidad disponible o inventario de cualquier ingrediente. Devuelve el stock real en tiempo real.")
     public Function<StockRequest, String> consultarStock() {
         return request -> {
-            Integer cantidad = stock.getOrDefault(request.ingrediente(), 0);
+            String key = request.ingrediente().substring(0, 1).toUpperCase() + request.ingrediente().substring(1).toLowerCase();
+            Integer cantidad = stock.getOrDefault(key, 0);
             return "Stock de " + request.ingrediente() + ": " + cantidad + " unidades.";
         };
     }
 
     @Bean
-    @Description("Realiza una compra de ingredientes si el stock es bajo")
+    @Description("Realiza una compra de un ingrediente SOLO cuando el usuario lo pide explícitamente con verbos como comprar, pedir, ordenar o similar. NUNCA llamar a esta función solo porque el stock sea bajo.")
     public Function<OrderRequest, String> realizarCompra() {
         return request -> {
             if (request.cantidad() > 50) return "Error: Capacidad de almacén excedida.";
