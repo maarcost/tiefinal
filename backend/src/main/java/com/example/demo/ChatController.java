@@ -49,6 +49,17 @@ public class ChatController {
         return "GENERAL";
     }
 
+    private boolean estaEnContexto(String mensaje) {
+    String m = mensaje.toLowerCase();
+    return m.matches(".*(tarta|harina|queso|chocolate|mantequilla|" +
+        "proveedor|stock|pedido|comprar|entregar|cliente|" +
+        "receta|hornear|ingrediente|marco|almacen|" +
+        "nata|fruta|granja|molino|reparto|factura|" +
+        "lo de siempre|pedido flash|flash|vip|ritz|lonja|" +
+        "valrhona|altamira|doñana|pinar|horno|contingencia|" +
+        "electricidad|generador|mantenimiento|tecno).*");
+    }
+
     private String normalizarTexto(String texto) {
     return texto.toLowerCase()
         .replaceAll("[áà]", "a").replaceAll("[éè]", "e")
@@ -117,13 +128,22 @@ public class ChatController {
             );
         }
 
-        // 2. Buscar en caché
+        // 2. Filtro de contexto empresarial
+        if (!estaEnContexto(mensaje)) {
+            return new OrchestratorResponse(
+                "Lo siento, solo puedo ayudarte con consultas relacionadas con Tartas Artesanas Marco — stock, pedidos, recetas, proveedores y logística. ¿En qué puedo ayudarte?",
+                "FUERA_DE_CONTEXTO - Bypass activado",
+                0, 0.0
+            );
+        }
+
+        // 3. Buscar en caché
         String cached = buscarEnCache(mensaje);
         if (cached != null) {
             return new OrchestratorResponse(cached, "CACHÉ - 0 tokens consumidos", 0, 0.0);
         }
 
-        // 3. Clasificar intención y construir prompt dinámico
+        // 4. Clasificar intención y construir prompt dinámico
         String intencion = clasificarIntencion(mensaje);
         String systemPrompt = construirPrompt(intencion);
 
