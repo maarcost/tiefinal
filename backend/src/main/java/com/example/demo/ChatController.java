@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.ai.vectorstore.SearchRequest;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -196,7 +197,7 @@ public class ChatController {
                     .functions("consultarStock", "realizarCompra");
 
             if (intencion.equals("GENERAL") || intencion.equals("RECETA") || intencion.equals("PROVEEDOR") || intencion.equals("PEDIDO")) {
-                prompt = prompt.advisors(new QuestionAnswerAdvisor(vectorStore));
+                prompt = prompt.advisors(new QuestionAnswerAdvisor(vectorStore,SearchRequest.defaults().withTopK(2)));
             }
 
             var response = prompt.call().chatResponse();
