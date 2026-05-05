@@ -43,10 +43,12 @@ public class ChatController {
     // ─── CLASIFICADOR DE INTENCIÓN ───
     private String clasificarIntencion(String mensaje) {
         String m = mensaje.toLowerCase();
+        if (m.contains("lo de siempre")) return "PEDIDO";
+        if (m.matches(".*(pedido flash|flash|urgente).*")) return "FLASH";
         if (m.matches(".*(stock|tenemos|queda|inventario|cantidad|hay de|quedan).*")) return "STOCK";
         if (m.matches(".*(receta|hornear|temperatura|ingredientes|mezcla|elaboracion|elaboración|preparar).*")) return "RECETA";
         if (m.matches(".*(proveedor|contacto|teléfono|telefono|entrega|suministro|llamo|llamar).*")) return "PROVEEDOR";
-        if (m.matches(".*(comprar|pedir|ordenar|quiero.*unidades|realizar.*compra|pedido flash|flash).*")) return "PEDIDO";
+        if (m.matches(".*(comprar|pedir|ordenar|quiero.*unidades|realizar.*compra).*")) return "PEDIDO";
         return "GENERAL";
     }
 
@@ -136,7 +138,11 @@ public class ChatController {
             "Responde únicamente con: nombre del proveedor, persona de contacto y teléfono. Sin información adicional.";
         
         case "PEDIDO" -> base + 
-            "FLUJO OBLIGATORIO: Si no hay confirmación aún, resume el pedido y pregunta '¿Confirmas este pedido?'. Si el usuario confirma con sí/confirmo/acepto, ejecuta realizarCompra inmediatamente.";
+            "JERGA: 'lo de siempre' = pedido estándar de 10 sacos de harina y 20 bloques de mantequilla. " +
+            "FLUJO OBLIGATORIO: Si no hay confirmación aún, consulta el stock de los ingredientes necesarios, resume el pedido y pregunta '¿Confirmas este pedido?'. Si el usuario confirma con sí/confirmo/acepto, ejecuta realizarCompra inmediatamente.";
+        case "FLASH" -> base +
+            "El usuario necesita un Pedido Flash — entrega en menos de 2 horas, solo disponible para Clientes VIP (Restaurante La Lonja y Hotel Ritz). " +
+            "Pregunta qué producto necesita y confirma que el destino es un cliente VIP antes de proceder.";    
         
         default -> base + 
             "Usa títulos, listas y tablas para estructurar la respuesta. Sé conciso y directo.";
@@ -218,7 +224,7 @@ public class ChatController {
                     .user(mensaje)
                     .functions("consultarStock", "realizarCompra");
 
-            if (intencion.equals("GENERAL") || intencion.equals("RECETA") || intencion.equals("PROVEEDOR") || intencion.equals("PEDIDO")) {
+            if (intencion.equals("GENERAL") || intencion.equals("RECETA") || intencion.equals("PROVEEDOR") || intencion.equals("PEDIDO") || intencion.equals("FLASH")) {
                 prompt = prompt.advisors(new QuestionAnswerAdvisor(vectorStore,SearchRequest.defaults().withTopK(2)));
             }
 
@@ -230,7 +236,7 @@ public class ChatController {
             String respuesta = response.getResult().getOutput().getContent();
 
             // Solo cachear preguntas que no dependen de stock en tiempo real
-            if (!intencion.equals("STOCK") && !intencion.equals("PEDIDO")) {
+            if (!intencion.equals("STOCK") && !intencion.equals("PEDIDO") && mensaje.split(" ").length > 4) {
                 cache.put(normalizarTexto(mensaje), respuesta);
             }
 
