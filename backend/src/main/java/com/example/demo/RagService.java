@@ -30,7 +30,6 @@ public class RagService {
         List<Document> documentos = textReader.get();
 
         // 2. Trocear el texto (para que la IA no se colapse)
-        //TokenTextSplitter splitter = new TokenTextSplitter();
         TokenTextSplitter splitter = new TokenTextSplitter(300, 50, 5, 10000, true);
         List<Document> trozos = splitter.apply(documentos);
 
