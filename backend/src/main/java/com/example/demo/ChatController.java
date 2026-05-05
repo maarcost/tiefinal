@@ -82,48 +82,7 @@ public class ChatController {
         }
         return null;
     }
-    
-    /* 
-    // ─── PROMPT DINÁMICO ───
-    private String construirPrompt(String intencion) {
-        String base = "Eres el Agente Operativo de Tartas Marco. REGLA ABSOLUTA: NUNCA ejecutes realizarCompra sin que el usuario lo pida explícitamente con palabras como comprar, pedir u ordenar.\n\n";
-
-        return switch (intencion) {
-            case "STOCK" -> base + """
-                El usuario pregunta por inventario. 
-                USA SIEMPRE la función consultarStock para obtener el dato real.
-                Responde de forma breve: indica el stock actual y si es bajo sugiere reponer, pero NO compres sin confirmación.
-                """;
-            case "RECETA" -> base + """
-                El usuario pregunta por recetas o procesos de elaboración.
-                Usa tablas para tiempos y temperaturas. Usa listas para ingredientes.
-                Incluye notas importantes con '>' si hay planes de contingencia relevantes.
-                """;
-            case "PROVEEDOR" -> base + """
-                El usuario pregunta por proveedores o contactos.
-                Responde con nombre del proveedor, persona de contacto y teléfono si está disponible.
-                Sé directo y conciso, sin información adicional innecesaria.
-                """;
-            case "PEDIDO" -> base + """
-                El usuario quiere realizar un pedido o compra.
-                FLUJO OBLIGATORIO:
-                - Si el usuario NO ha confirmado aún: resume el pedido y pregunta "¿Confirmas este pedido?"
-                - Si el usuario dice "sí", "si", "confirmo", "acepto", "adelante" o similar: ejecuta INMEDIATAMENTE realizarCompra con los ingredientes y cantidades del pedido. No vuelvas a preguntar.
-                Recuerda las condiciones de Pedido Flash si aplica: solo clientes VIP, menos de 2 horas.
-                """;
-            default -> base + """
-                FORMATO DE SALIDA:
-                1. Usa títulos con '#' para secciones importantes.
-                2. Usa tablas para comparar datos.
-                3. Usa listas con viñetas para pasos o ingredientes.
-                4. Usa bloques '>' para advertencias o notas importantes.
-                5. EVITA las negritas en frases largas, úsalas solo para términos clave.
-                6. NUNCA realices una compra sin que el usuario lo haya solicitado explícitamente.
-                7. Si el stock es bajo, informa pero espera confirmación antes de actuar.
-                """;
-        };
-    }
-*/  
+ 
     private String construirPrompt(String intencion) {
     String base = "Eres el Agente Operativo de Tartas Marco. REGLA ABSOLUTA: NUNCA ejecutes realizarCompra sin confirmación explícita del usuario.\n\n";
 

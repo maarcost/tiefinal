@@ -2,4 +2,4 @@ spring.application.name=backend
 spring.ai.openai.api-key=TU_API_KEY_DE_GROQ
 spring.ai.openai.base-url=https://api.groq.com/openai
 spring.ai.openai.chat.options.model=llama-3.3-70b-versatile
-server.port=8081
+server.port=8080
